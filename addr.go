@@ -91,7 +91,8 @@ func (addrs *AddrSet) Read() error {
 			}
 
 			// XXX: scope and other filters?
-			addrs.updateAddr(addrUpdate.Addr, addrUpdate.NewAddr)
+			addr := netlink.Addr{IPNet: &addrUpdate.LinkAddress, Scope: addrUpdate.Scope}
+			addrs.updateAddr(addr, addrUpdate.NewAddr)
 
 			return nil
 		}
