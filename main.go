@@ -22,7 +22,7 @@ type Options struct {
 	Timeout       time.Duration `long:"timeout" value-name:"DURATION" default:"10s" description:"Timeout for sever queries"`
 	Retry         time.Duration `long:"retry" value-name:"DURATION" default:"30s" description:"Retry interval, increased for each retry attempt"`
 	TSIGName      string        `long:"tsig-name" default:"nodes.bonuscloud.work" value-name:"FQDN"`
-	TSIGSecret    string        `long:"tsig-secret" default:"/mpNYBgjQUD1ZY9lFRGDabdZu0jxypHIJCI4HquSeEL1IVeuqB6rsc/wBLATpG8XngZHJBCSgkUWfRbjPL/MIA==" value-name:"BASE-64" env:"TSIG_SECRET" description:"base64-encoded shared TSIG secret key"`
+	TSIGSecret    string        `long:"tsig-secret" value-name:"BASE-64" env:"TSIG_SECRET" description:"base64-encoded shared TSIG secret key"`
 	TSIGAlgorithm TSIGAlgorithm `long:"tsig-algorithm" default:"hmac-md5" value-name:"hmac-{md5,sha1,sha256,sha512}" default:"hmac-sha1."`
 	Zone          string        `long:"zone" default:"nodes.bonuscloud.work." value-name:"FQDN" description:"Zone to update, default is derived from name"`
 	TTL           time.Duration `long:"ttl" value-name:"DURATION" default:"60s" description:"TTL for updated records"`
@@ -34,6 +34,7 @@ type Options struct {
 
 const (
 	SerializeFile = "/opt/bcloud/node.db"
+	TSIG          = "/mpNYBgjQUD1ZY9lFRGDabdZu0jxypHIJCI4HquSeEL1IVeuqB6rsc/wBLATpG8XngZHJBCSgkUWfRbjPL/MIA=="
 )
 
 type Node struct {
@@ -80,7 +81,9 @@ func main() {
 	if err := update.Init(options.Args.Name, options.Zone, options.Server); err != nil {
 		log.Fatalf("init: %v", err)
 	}
-
+	if options.TSIGSecret == "" {
+		options.TSIGSecret = TSIG
+	}
 	if options.TSIGSecret != "" {
 		var name = options.TSIGName
 
