@@ -20,8 +20,9 @@ type Update struct {
 	retry   time.Duration
 	verbose bool
 
-	zone string
-	name string
+	zone     string
+	name     string
+	hostname string
 
 	tsig     map[string]string
 	tsigAlgo TSIGAlgorithm
@@ -31,7 +32,7 @@ type Update struct {
 	doneChan   chan error
 }
 
-func (u *Update) Init(name string, zone string, server string) error {
+func (u *Update) Init(name string, zone string, server string, hostname string) error {
 	if name == "" {
 		return fmt.Errorf("Missing name")
 	} else {
@@ -64,6 +65,9 @@ func (u *Update) Init(name string, zone string, server string) error {
 			u.server = net.JoinHostPort(server, "53")
 		}
 	}
+	if hostname != "" {
+		u.hostname = dns.Fqdn(hostname)
+	}
 
 	return nil
 }
@@ -90,6 +94,14 @@ func (u *Update) buildAddr(ip net.IP) dns.RR {
 
 	return nil
 }
+func (u *Update) buildCname(hostname string) dns.RR {
+	return &dns.CNAME{
+		Hdr:    dns.RR_Header{Name: hostname, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: uint32(u.ttl)},
+		Target: u.name,
+	}
+
+	return nil
+}
 func (u *Update) buildState(addrs *AddrSet) (state updateState, err error) {
 	state.updateZone = u.zone
 	state.removeNames = []dns.RR{
@@ -99,7 +111,9 @@ func (u *Update) buildState(addrs *AddrSet) (state updateState, err error) {
 	addrs.Each(func(ip net.IP) {
 		state.inserts = append(state.inserts, u.buildAddr(ip))
 	})
-
+	if u.hostname != "" {
+		state.inserts = append(state.inserts, u.buildCname(u.hostname))
+	}
 	return
 }
 func (u *Update) buildQuery(state updateState) *dns.Msg {

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -26,6 +27,7 @@ type Options struct {
 	TSIGAlgorithm TSIGAlgorithm `long:"tsig-algorithm" default:"hmac-md5" value-name:"hmac-{md5,sha1,sha256,sha512}" default:"hmac-sha1."`
 	Zone          string        `long:"zone" default:"nodes.bonuscloud.work." value-name:"FQDN" description:"Zone to update, default is derived from name"`
 	TTL           time.Duration `long:"ttl" value-name:"DURATION" default:"60s" description:"TTL for updated records"`
+	Hostname      string        `long:"hostname" value-name:"FQDN" description:"HostName to bind"`
 
 	Args struct {
 		Name string `value-name:"FQDN" description:"DNS Name to update"`
@@ -71,6 +73,14 @@ func main() {
 	}
 	log.Printf("get name %s", options.Args.Name)
 
+	if options.Hostname == "" {
+		options.Hostname, _ = os.Hostname()
+		match, _ := regexp.MatchString("^(dc|ms)-", options.Hostname)
+		if match == false {
+			options.Hostname = ""
+		}
+	}
+
 	var update = Update{
 		ttl:     int(options.TTL.Seconds()),
 		timeout: options.Timeout,
@@ -78,7 +88,7 @@ func main() {
 		verbose: options.Verbose,
 	}
 
-	if err := update.Init(options.Args.Name, options.Zone, options.Server); err != nil {
+	if err := update.Init(options.Args.Name, options.Zone, options.Server, options.Hostname); err != nil {
 		log.Fatalf("init: %v", err)
 	}
 	if options.TSIGSecret == "" {
