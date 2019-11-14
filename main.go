@@ -73,14 +73,6 @@ func main() {
 	}
 	log.Printf("get name %s", options.Args.Name)
 
-	if options.Hostname == "" {
-		options.Hostname, _ = os.Hostname()
-		match, _ := regexp.MatchString("^(dc|ms)-", options.Hostname)
-		if match == false {
-			options.Hostname = ""
-		}
-	}
-
 	var update = Update{
 		ttl:     int(options.TTL.Seconds()),
 		timeout: options.Timeout,
@@ -88,9 +80,19 @@ func main() {
 		verbose: options.Verbose,
 	}
 
+	if options.Hostname == "" {
+		Hostname, _ := os.Hostname()
+		match, _ := regexp.MatchString("^(dc|ms)-", Hostname)
+		if match == true {
+			options.Hostname = Hostname + "." + options.Zone
+			log.Printf("get hostname %s", options.Hostname)
+		}
+	}
+
 	if err := update.Init(options.Args.Name, options.Zone, options.Server, options.Hostname); err != nil {
 		log.Fatalf("init: %v", err)
 	}
+
 	if options.TSIGSecret == "" {
 		options.TSIGSecret = TSIG
 	}
@@ -122,6 +124,8 @@ func main() {
 			log.Fatalf("update: %v", err)
 		}
 
+		log.Printf("wait...")
+
 		if !options.Watch {
 			break
 		}
@@ -132,12 +136,10 @@ func main() {
 			log.Printf("addrs update...")
 		}
 	}
-
-	log.Printf("wait...")
-
 	if err := update.Done(); err != nil {
 		log.Printf("update done: %v", err)
 	} else {
 		log.Printf("update done")
 	}
+
 }
