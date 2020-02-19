@@ -19,7 +19,7 @@ type Options struct {
 	InterfaceFamily Family `long:"interface-family" default:"ipv6" value-name:"ipv4|ipv6|all" description:"Limit to interface addreses of given family"`
 
 	// DNS Update
-	Server        string        `long:"server" default:"ns.nodes.bonuscloud.work" value-name:"HOST[:PORT]" description:"Server for UPDATE query, default is discovered from zone SOA"`
+	Server        string        `long:"server" value-name:"HOST[:PORT]" description:"Server for UPDATE query, default is discovered from zone SOA"`
 	Timeout       time.Duration `long:"timeout" value-name:"DURATION" default:"10s" description:"Timeout for sever queries"`
 	Retry         time.Duration `long:"retry" value-name:"DURATION" default:"30s" description:"Retry interval, increased for each retry attempt"`
 	TSIGName      string        `long:"tsig-name" default:"nodes.bonuscloud.work" value-name:"FQDN"`
@@ -82,7 +82,7 @@ func main() {
 
 	if options.Hostname == "" {
 		Hostname, _ := os.Hostname()
-		match, _ := regexp.MatchString("^(dc|ms)-", Hostname)
+		match, _ := regexp.MatchString("^(dc|ms|edge)-", Hostname)
 		if match == true {
 			options.Hostname = Hostname + "." + options.Zone
 			log.Printf("get hostname %s", options.Hostname)
