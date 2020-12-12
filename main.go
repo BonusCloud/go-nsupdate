@@ -82,7 +82,7 @@ func main() {
 
 	if options.Hostname == "" {
 		Hostname, _ := os.Hostname()
-		match, _ := regexp.MatchString("^(dc|ms|edge)-", Hostname)
+		match, _ := regexp.MatchString("^(dc|ms|edge|mh)-", Hostname)
 		if match == true {
 			options.Hostname = Hostname + "." + options.Zone
 			log.Printf("get hostname %s", options.Hostname)
